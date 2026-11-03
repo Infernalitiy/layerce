@@ -54,13 +54,11 @@
       "problemMatcher": []
     },
     {
-      "label": "CE: build game (later)",
+      "label": "CE: build game",
       "type": "process",
-      "command": "powershell.exe",
+      "command": "python",
       "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/tools/build.ps1"
+        "${workspaceFolder}/tools/build_native.py"
       ],
       "problemMatcher": "$gcc",
       "group": {
@@ -69,14 +67,12 @@
       }
     },
     {
-      "label": "CE: build engine tests (later)",
+      "label": "CE: build engine tests",
       "type": "process",
-      "command": "powershell.exe",
+      "command": "python",
       "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/tools/build.ps1",
-        "-CoreTests"
+        "${workspaceFolder}/tools/build_native.py",
+        "--tests"
       ],
       "problemMatcher": "$gcc"
     },

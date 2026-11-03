@@ -49,7 +49,7 @@ static void layers_and_leaks(void) {
     CHECK(g.stats.escaped==1 && g.bloon_count==0); counts();
 }
 static void targets(void) {
-    Tower t={40,40,0,TARGET_FIRST,1};
+    Tower t={.x=40,.y=40,.mode=TARGET_FIRST,.active=1};
     game_init(&g);
     game_spawn(&g,1,16*10); game_spawn(&g,4,16*20); game_spawn(&g,2,16*40);
     CHECK(game_find_target(&g,&t)==2);

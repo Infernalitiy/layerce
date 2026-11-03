@@ -4,7 +4,9 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $toolsRoot = Join-Path $projectRoot '.tools'
 $installRoot = Join-Path $toolsRoot 'CEdev'
 if (Test-Path -LiteralPath (Join-Path $installRoot 'bin\cedev-config.exe')) {
-    Write-Host "CEdev is already installed: $installRoot"
+    & (Join-Path $installRoot 'bin\ez80-clang.exe') --version
+    if ($LASTEXITCODE -ne 0) { throw 'CEdev files exist but compiler launch failed. Check the Microsoft Visual C++ x86 runtime.' }
+    Write-Host "CEdev compiler launch verified: $installRoot"
     exit 0
 }
 if (Test-Path -LiteralPath $installRoot) {

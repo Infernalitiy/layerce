@@ -27,3 +27,13 @@ run(assembler,'-I'+str(o),'-march=ez80+full',o/'crt0.s','-o',o/'crt0.o')
 run(ld,*common,'--no-warn-rwx-segments','--defsym=LOAD_ADDR=0xD1A87F','--defsym=BSSHEAP_LOW=0xD052C6','--defsym=BSSHEAP_HIGH=0xD13FD8','--defsym=STACK_HIGH=0xD1A87E','-T'+str(t/'meta/linker_script.ld'),'-Map='+str(b/(name+'.map')),partial,o/'crt0.o','--start-group',t/'lib/libc/allocator_standard.a',*libs,'--end-group','-o',b/(name+'.obj'))
 run(t/'bin/convbin.exe','-r','-k','8xp','-u','-n',name,'-j','elf','-i',b/(name+'.obj'),'-o',b/(name+'.8xp'))
 print('BUILT',b/(name+'.8xp'),(b/(name+'.8xp')).stat().st_size,'bytes')
+import hashlib, json, re
+maptext=(b/(name+'.map')).read_text()
+measurements={}
+for symbol in ['___bss_len','___heap_low','___heap_high']:
+ match=re.search(r'(0x[0-9a-fA-F]+)\s+'+symbol+r'\b',maptext)
+ if match: measurements[symbol]=int(match.group(1),16)
+measurements['file_bytes']=(b/(name+'.8xp')).stat().st_size
+measurements['sha256']=hashlib.sha256((b/(name+'.8xp')).read_bytes()).hexdigest()
+(b/(name+'-build.json')).write_text(json.dumps(measurements,indent=2))
+print(json.dumps(measurements,indent=2))

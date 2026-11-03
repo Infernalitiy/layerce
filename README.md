@@ -9,10 +9,10 @@ A compact, original 2D tower defense project for the TI-84 Plus CE Python,
 inspired by Bloons-style layer mechanics and strategic tower placement.
 This is independent software, not a BTD6 port or a Ninja Kiwi product.
 
-**Current validation:** source-data checks passed. C compilation, C engine tests,
-CEmu execution, physical-calculator execution, FPS, and installed size are
-**not yet verified**. There is no prebuilt `.8xp` in this initial source snapshot.
-Do not describe this as a tested calculator release.
+**Current build: v0.2.** Calculator compilation/linking now pass. Dart towers have
+three upgrade paths with crosspath restrictions. See [DEVELOPMENT.md](docs/DEVELOPMENT.md)
+for measured sizes, current controls, build commands and the first CEmu test.
+Emulator gameplay, completed engine execution, physical play and FPS remain pending.
 
 ## What the source implements
 
@@ -28,7 +28,7 @@ Do not describe this as a tested calculator release.
   continuous refill to 96 bloons. This mode intentionally bypasses placement
   and economy rules; normal gameplay does not.
 
-The source does not yet include upgrades, camo, regrow, splitting enemies,
+The source does not yet include camo, regrow, splitting enemies,
 MOAB classes, save files, more maps, or other tower classes. Those are staged
 expansions, not forgotten requirements. Current wave and tower values are
 original prototype balance, not exact BTD6 statistics.
@@ -139,7 +139,8 @@ These steps use **CEmu on Windows**.
 | Mode | Pause/resume; placement remains available while paused |
 | + | Toggle 1x/2x simulation speed |
 | Alpha | Cycle selected tower: First / Last / Strong |
-| Del | Sell selected tower for $126 (70% of base cost) |
+| Del | Sell selected tower for 70% of total investment |
+| 1 / 2 / 3 | Upgrade selected tower: range / speed / power |
 | Y= | Help/back; simulation suspends while an overlay is open |
 | Trace | Measurement screen/back; simulation suspends |
 | Window | Start stress test only from an untouched new game |
