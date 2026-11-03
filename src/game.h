@@ -20,8 +20,8 @@ typedef enum { TARGET_FIRST, TARGET_LAST, TARGET_STRONG, TARGET_COUNT } TargetMo
 typedef enum { PLACE_BLOCKED=-1, PLACE_POOR=-2, PLACE_FULL=-3 } PlaceError;
 typedef struct { uint16_t x; uint8_t y; } Point;
 typedef struct { uint16_t distance; int16_t x,y; uint8_t layer; } Bloon;
-typedef struct { int16_t x,y,vx,vy; uint8_t ttl; } Dart;
-typedef struct { uint16_t x; uint8_t y,cooldown,mode,active; } Tower;
+typedef struct { int16_t x,y,vx,vy; uint8_t ttl,damage; } Dart;
+typedef struct { uint16_t x; uint8_t y,cooldown,mode,active,upgrades[3]; uint16_t spent; } Tower;
 typedef struct { uint8_t layer,count,gap; } WaveGroup;
 typedef struct { uint8_t first,groups; uint16_t bonus; } Wave;
 typedef struct {
@@ -50,6 +50,10 @@ bool game_can_place(const Game *g, int x, int y);
 int game_place(Game *g, int x, int y);
 int game_tower_at(const Game *g, int x, int y);
 bool game_sell(Game *g, int index);
+unsigned game_range(const Tower *t);
+unsigned game_period(const Tower *t);
+uint16_t game_upgrade_cost(const Tower *t, unsigned path_index);
+bool game_upgrade(Game *g, int index, unsigned path_index);
 bool game_start_wave(Game *g);
 void game_tick(Game *g);
 int game_find_target(const Game *g, const Tower *tower);

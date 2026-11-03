@@ -81,7 +81,8 @@ int game_place(Game *g,int x,int y) {
     for (i=0;i<MAX_TOWERS;++i) if (!g->towers[i].active) {
         Tower *t=&g->towers[i];
         t->x=(uint16_t)x; t->y=(uint8_t)y;
-        t->cooldown=0; t->mode=TARGET_FIRST; t->active=1;
+        memset(t,0,sizeof(*t)); t->x=(uint16_t)x; t->y=(uint8_t)y;
+        t->mode=TARGET_FIRST; t->active=1; t->spent=TOWER_COST;
         g->money-=TOWER_COST; ++g->tower_count;
         return (int)i;
     }
@@ -97,11 +98,36 @@ int game_tower_at(const Game *g,int x,int y) {
     }
     return found;
 }
+unsigned game_range(const Tower *t) { return TOWER_RANGE+12*t->upgrades[0]; }
+unsigned game_period(const Tower *t) {
+    static const uint8_t periods[4]={12,9,6,4};
+    return periods[t->upgrades[1]];
+}
+uint16_t game_upgrade_cost(const Tower *t,unsigned p) {
+    static const uint16_t costs[3][3]={{90,160,280},{120,220,400},{150,300,550}};
+    unsigned i,used=0;
+    if (p>=3 || t->upgrades[p]>=3) return 0;
+    for (i=0;i<3;++i) if (t->upgrades[i]) ++used;
+    if (!t->upgrades[p] && used>=2) return 0;
+    if (t->upgrades[p]==2)
+        for (i=0;i<3;++i) if (i!=p && t->upgrades[i]>2) return 0;
+    return costs[p][t->upgrades[p]];
+}
+bool game_upgrade(Game *g,int index,unsigned p) {
+    Tower *t; uint16_t cost;
+    if (index<0 || index>=MAX_TOWERS || !g->towers[index].active) return false;
+    t=&g->towers[index]; cost=game_upgrade_cost(t,p);
+    if (!cost || g->money<cost) return false;
+    g->money-=cost; t->spent+=cost; ++t->upgrades[p];
+    /* Apply a shorter cadence immediately, without awarding a free shot. */
+    if (t->cooldown>game_period(t)) t->cooldown=(uint8_t)game_period(t);
+    return true;
+}
 bool game_sell(Game *g,int index) {
     if (index<0 || index>=MAX_TOWERS || !g->towers[index].active) return false;
     g->towers[index].active=0;
     --g->tower_count;
-    g->money+=TOWER_REFUND;
+    g->money+=(uint16_t)((uint32_t)g->towers[index].spent*70/100);
     return true;
 }
 bool game_spawn(Game *g,uint8_t layer,uint16_t distance) {
@@ -140,8 +166,8 @@ int game_find_target(const Game *g,const Tower *t) {
         const Bloon *b=&g->bloons[i];
         int dx=b->x/FP-t->x,dy=b->y/FP-t->y;
         bool better=false;
-        if (iabs(dx)>TOWER_RANGE || iabs(dy)>TOWER_RANGE ||
-            dx*dx+dy*dy>TOWER_RANGE*TOWER_RANGE) continue;
+        if (iabs(dx)>(int)game_range(t) || iabs(dy)>(int)game_range(t) ||
+            dx*dx+dy*dy>(int)(game_range(t)*game_range(t))) continue;
         if (best<0) better=true;
         else {
             const Bloon *old=&g->bloons[best];
@@ -165,7 +191,7 @@ static bool fire(Game *g,const Tower *t,const Bloon *b) {
         d->x=(int16_t)(t->x*FP); d->y=(int16_t)(t->y*FP);
         /* Straight, non-homing shot; diagonal speed is intentionally approximate. */
         d->vx=(int16_t)(dx*112/divisor); d->vy=(int16_t)(dy*112/divisor);
-        d->ttl=14;
+        d->ttl=20; d->damage=(uint8_t)(1+t->upgrades[2]);
         ++g->dart_count;
         if (g->dart_count>g->stats.peak_darts) g->stats.peak_darts=g->dart_count;
         return true;
@@ -214,7 +240,9 @@ static void move_darts(Game *g) {
                 int dx=d->x/FP-g->bloons[j].x/FP;
                 int dy=d->y/FP-g->bloons[j].y/FP;
                 if (iabs(dx)<=6 && iabs(dy)<=6 && dx*dx+dy*dy<=36) {
-                    game_damage(g,j); d->ttl=0; break;
+                    unsigned hit;
+                    for (hit=0;hit<d->damage && g->bloons[j].layer;++hit) game_damage(g,j);
+                    d->ttl=0; break;
                 }
             }
         }
@@ -235,7 +263,7 @@ void game_tick(Game *g) {
         if (t->cooldown) --t->cooldown;
         if (!t->cooldown) {
             int target=game_find_target(g,t);
-            if (target>=0 && fire(g,t,&g->bloons[target])) t->cooldown=TOWER_PERIOD;
+            if (target>=0 && fire(g,t,&g->bloons[target])) t->cooldown=(uint8_t)game_period(t);
         }
     }
     move_darts(g);
@@ -256,7 +284,7 @@ void game_stress(Game *g) {
     for (i=0;i<MAX_TOWERS;++i) {
         Tower *t=&g->towers[i];
         t->x=(uint16_t)(16+(i%8)*30); t->y=(uint8_t)(40+(i/8)*65);
-        t->active=1; t->mode=(uint8_t)(i%TARGET_COUNT);
+        t->active=1; t->spent=TOWER_COST; t->mode=(uint8_t)(i%TARGET_COUNT);
     }
     g->tower_count=MAX_TOWERS;
     game_start_wave(g);

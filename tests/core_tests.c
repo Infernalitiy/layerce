@@ -110,12 +110,34 @@ static void path_and_campaign(void) {
     for(i=0;i<900;++i) { game_tick(&g); game_stress_refill(&g); }
     CHECK(g.bloon_count==MAX_BLOONS && g.tower_count==MAX_TOWERS); counts();
 }
+static void upgrades(void) {
+    int index; uint16_t cash;
+    game_init(&g); index=game_place(&g,96,120); g.money=5000;
+    CHECK(game_upgrade(&g,index,0)); CHECK(game_range(&g.towers[index])==70);
+    CHECK(game_upgrade(&g,index,0)); CHECK(game_upgrade(&g,index,0));
+    CHECK(!game_upgrade(&g,index,0));
+    CHECK(game_upgrade(&g,index,1)); CHECK(game_period(&g.towers[index])==9);
+    CHECK(game_upgrade(&g,index,1)); CHECK(!game_upgrade(&g,index,1));
+    CHECK(!game_upgrade(&g,index,2));
+    cash=g.money; CHECK(game_sell(&g,index));
+    CHECK(g.money==cash+(180+90+160+280+120+220)*70/100);
+    index=game_place(&g,96,120); CHECK(g.towers[index].upgrades[0]==0);
+    g.money=0; CHECK(!game_upgrade(&g,index,2)); CHECK(g.money==0);
+    game_init(&g); index=game_place(&g,30,38); g.money=5000;
+    CHECK(game_upgrade(&g,index,2)); CHECK(game_upgrade(&g,index,2));
+    game_start_wave(&g); g.group=waves[0].first+waves[0].groups;
+    game_spawn(&g,3,30*FP);
+    for (unsigned i=0;i<8 && g.running;++i) game_tick(&g);
+    CHECK(g.stats.pops==3 && g.stats.destroyed==1);
+}
+volatile uint8_t test_report[4];
 int main(void) {
 #ifdef __TICE__
     os_ClrHome();
 #endif
     placement(); layers_and_leaks(); targets(); capacity_and_cadence();
-    darts_and_round_end(); path_and_campaign();
+    darts_and_round_end(); path_and_campaign(); upgrades();
+    test_report[0]=0xCE; test_report[1]=0x54; test_report[2]=failures?1:0; test_report[3]=0xAA;
     printf("%u checks, %u failures\n",checks,failures);
     printf("Game=%u B, B/D/T=%u/%u/%u\n",(unsigned)sizeof(Game),
         (unsigned)sizeof(Bloon),(unsigned)sizeof(Dart),(unsigned)sizeof(Tower));

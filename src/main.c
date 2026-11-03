@@ -66,7 +66,7 @@ static void scene(void) {
     path_draw(C_PATH_EDGE,9); path_draw(C_PATH,7);
     if (selected>=0 && game.towers[selected].active) {
         gfx_SetColor(C_ACCENT);
-        gfx_Circle(game.towers[selected].x,game.towers[selected].y,TOWER_RANGE);
+        gfx_Circle(game.towers[selected].x,game.towers[selected].y,game_range(&game.towers[selected]));
     }
     for (i=0;i<MAX_TOWERS;++i) if (game.towers[i].active) {
         Tower *t=&game.towers[i];
@@ -98,9 +98,16 @@ static void scene(void) {
     number(260,32,"RD ",game.wave<WAVE_COUNT?game.wave+1:WAVE_COUNT,C_WHITE);
     text(260,46,"/ 8",C_MUTED);
     text(260,66,"DART",C_ACCENT);
-    text(260,80,"$180",C_WHITE);
-    number(260,100,"B ",game.bloon_count,C_WHITE);
-    number(260,114,"D ",game.dart_count,C_WHITE);
+    if (selected>=0 && game.towers[selected].active) {
+        unsigned p; char label[16];
+        for (p=0;p<3;++p) {
+            uint16_t cost=game_upgrade_cost(&game.towers[selected],p);
+            snprintf(label,sizeof(label),"%u:%u $%u",p+1,(unsigned)game.towers[selected].upgrades[p],(unsigned)cost);
+            text(258,80+p*14,label,cost?C_WHITE:C_MUTED);
+        }
+    } else text(260,80,"$180",C_WHITE);
+    
+    
     text(260,136,speed==1?"1x":"2x",C_ACCENT);
     if (selected>=0 && game.towers[selected].active) {
         text(260,158,modes[game.towers[selected].mode],C_WHITE);
@@ -122,15 +129,15 @@ static void box(const char *title) {
     text(24,39,title,C_ACCENT);
 }
 static void help(void) {
-    box("LAYER DEFENSE  v0.1");
+    box("LAYER DEFENSE  v0.2");
     text(24,59,"Arrows      Move cursor",C_WHITE);
     text(24,73,"2nd/ENTER   Place or select",C_WHITE);
     text(24,87,"ZOOM        Start next round",C_WHITE);
     text(24,101,"MODE        Pause / resume",C_WHITE);
     text(24,115,"+           1x / 2x speed",C_WHITE);
     text(24,129,"ALPHA       Target mode",C_WHITE);
-    text(24,143,"DEL         Sell selected",C_WHITE);
-    text(24,157,"TRACE       Measurements",C_WHITE);
+    text(24,143,"1/2/3 Range/Speed/Power upgrades",C_YELLOW);
+    text(24,157,"DEL sell | TRACE measurements",C_WHITE);
     text(24,171,"Y= help/back | CLEAR exit",C_WHITE);
     text(24,190,"2nd: play | WINDOW: stress*",C_YELLOW);
 }
@@ -180,7 +187,7 @@ static void sample(uint32_t now) {
     frames=steps=sim_sum=draw_sum=sim_peak=draw_peak=0; sample_start=now;
 }
 enum { K_PLACE=1,K_START=2,K_PAUSE=4,K_SPEED=8,K_TARGET=16,K_SELL=32,
-       K_HELP=64,K_STATS=128,K_EXIT=256,K_STRESS=512,K_NEW=1024 };
+       K_HELP=64,K_STATS=128,K_EXIT=256,K_STRESS=512,K_NEW=1024,K_UP1=2048,K_UP2=4096,K_UP3=8192 };
 static uint16_t controls(void) {
     uint16_t k=0;
     if (kb_IsDown(kb_Key2nd)||kb_IsDown(kb_KeyEnter)) k|=K_PLACE;
@@ -194,6 +201,9 @@ static uint16_t controls(void) {
     if (kb_IsDown(kb_KeyClear)) k|=K_EXIT;
     if (kb_IsDown(kb_KeyWindow)) k|=K_STRESS;
     if (kb_IsDown(kb_KeyGraph)) k|=K_NEW;
+    if (kb_IsDown(kb_Key1)) k|=K_UP1;
+    if (kb_IsDown(kb_Key2)) k|=K_UP2;
+    if (kb_IsDown(kb_Key3)) k|=K_UP3;
     return k;
 }
 int main(void) {
@@ -244,9 +254,13 @@ int main(void) {
             if (pressed & K_SPEED) speed=speed==1?2:1;
             if (!bench && (pressed & K_START)) game_start_wave(&game);
             if (!bench && selected>=0 && game.towers[selected].active) {
+                unsigned p;
+                for (p=0;p<3;++p) if (pressed & (K_UP1<<p)) {
+                    notice=game_upgrade(&game,selected,p)?"Upgraded. 1 range / 2 speed / 3 power":"Upgrade locked or insufficient cash";
+                }
                 if (pressed & K_TARGET) game.towers[selected].mode=
                     (game.towers[selected].mode+1)%TARGET_COUNT;
-                if (pressed & K_SELL) { game_sell(&game,selected); selected=-1; notice="Sold: +$126"; }
+                if (pressed & K_SELL) { game_sell(&game,selected); selected=-1; notice="Sold: 70% investment refunded"; }
             }
             if (now-last_move>=(uint32_t)CLOCKS_PER_SEC/60) {
                 if (kb_IsDown(kb_KeyLeft)) cursor_x-=2;
