@@ -135,8 +135,13 @@ int main(void) {
 #ifdef __TICE__
     os_ClrHome();
 #endif
-    placement(); layers_and_leaks(); targets(); capacity_and_cadence();
-    darts_and_round_end(); path_and_campaign(); upgrades();
+    printf("1/7 Placement\n"); placement();
+    printf("2/7 Layers\n"); layers_and_leaks();
+    printf("3/7 Targeting\n"); targets();
+    printf("4/7 Capacity\n"); capacity_and_cadence();
+    printf("5/7 Darts\n"); darts_and_round_end();
+    printf("6/7 Campaign + stress (slow)\n"); path_and_campaign();
+    printf("7/7 Upgrades\n"); upgrades();
     test_report[0]=0xCE; test_report[1]=0x54; test_report[2]=failures?1:0; test_report[3]=0xAA;
     printf("%u checks, %u failures\n",checks,failures);
     printf("Game=%u B, B/D/T=%u/%u/%u\n",(unsigned)sizeof(Game),

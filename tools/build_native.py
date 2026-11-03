@@ -2,9 +2,9 @@
 import argparse, subprocess
 from pathlib import Path
 r=Path(__file__).resolve().parents[1]
-a=argparse.ArgumentParser();a.add_argument('--tests',action='store_true');args=a.parse_args()
-t=r/'.tools/CEdev';o=r/'obj'/('tests-native' if args.tests else 'native');o.mkdir(parents=True,exist_ok=True)
-b=r/'bin';b.mkdir(exist_ok=True);name='TESTCE' if args.tests else 'LAYERCE'
+a=argparse.ArgumentParser();a.add_argument('--tests',action='store_true');a.add_argument('--smoke',action='store_true');args=a.parse_args()
+t=r/'.tools/CEdev';o=r/'obj'/('smoke-native' if args.smoke else ('tests-native' if args.tests else 'native'));o.mkdir(parents=True,exist_ok=True)
+b=r/'bin';b.mkdir(exist_ok=True);name='LAUNCH' if args.smoke else ('TESTCE' if args.tests else 'LAYERCE')
 def run(exe,*flags):
  print('[build]',Path(exe).name,flush=True)
  subprocess.run([str(exe),*[str(f).replace(chr(92), chr(47)) for f in flags]],cwd=r,check=True)
@@ -12,6 +12,7 @@ cc=t/'bin/ez80-clang.exe'; assembler=t/'binutils/bin/z80-none-elf-as.exe';ld=t/'
 flags=['-nostdinc','-Xclang','-fforce-mangle-main-argc-argv','-fno-autolink','-fno-addrsig','-fno-threadsafe-statics','-fno-aligned-allocation','-mllvm','-profile-guided-section-prefix=false','-mllvm','-z80-gas-style','-ffunction-sections','-fdata-sections','-fno-math-errno','-D__TICE__=1','-isystem',str(t/'include'),'-Isrc','-Wall','-Wextra','-Oz','-std=c11','-DNDEBUG=1']
 if args.tests: flags+=['-DCORE_TEST']
 sources=['src/game.c','tests/core_tests.c'] if args.tests else ['src/game.c','src/main.c']
+if args.smoke: sources=['tests/launch_check.c']
 objects=[]
 for source in sources:
  stem=Path(source).stem;s=o/(stem+'.s');obj=o/(stem+'.o')
