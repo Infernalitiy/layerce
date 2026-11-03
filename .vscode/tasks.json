@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: install CE compiler",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/tools/install-dependencies.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Setup: connect GitHub repository",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/tools/connect-github.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub: automatic backup",
+      "type": "process",
+      "command": "python",
+      "args": [
+        "-u",
+        "${workspaceFolder}/tools/auto_sync.py"
+      ],
+      "problemMatcher": [],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    },
+    {
+      "label": "GitHub: preview backup without pushing",
+      "type": "process",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/tools/auto_sync.py",
+        "--dry-run"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CE: build game (later)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/tools/build.ps1"
+      ],
+      "problemMatcher": "$gcc",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "CE: build engine tests (later)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/tools/build.ps1",
+        "-CoreTests"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "CE: verify source data",
+      "type": "process",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/tools/verify_data.py"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

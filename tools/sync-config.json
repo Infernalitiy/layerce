@@ -1,0 +1,7 @@
+{
+  "remote": "origin",
+  "remote_url": "https://github.com/infernalitiy/layerce.git",
+  "branch": "dev",
+  "interval_seconds": 120,
+  "quiet_seconds": 10
+}

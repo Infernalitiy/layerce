@@ -1,0 +1,39 @@
+name: Validate and build CE prototype
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source data and execute real engine tests
+        run: |
+          python3 tools/verify_data.py
+          python3 -m unittest discover -s tests -p test_auto_sync.py -v
+          mkdir -p test-bin
+          gcc -std=c11 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer src/game.c tests/core_tests.c -o test-bin/core-tests
+          ./test-bin/core-tests
+      - name: Install pinned official CEdev v15.0
+        run: |
+          curl --fail --location --retry 3 https://github.com/CE-Programming/toolchain/releases/download/v15.0/CEdev-Linux.tar.gz -o "$RUNNER_TEMP/CEdev.tar.gz"
+          tar -xzf "$RUNNER_TEMP/CEdev.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/CEdev/bin" >> "$GITHUB_PATH"
+      - name: Build engine tests for calculator
+        run: |
+          make NAME=TESTCE 'CFLAGS=-Wall -Wextra -Oz -std=c11 -DCORE_TEST' EXTRA_C_SOURCES=tests/core_tests.c V=1
+          mkdir -p artifacts
+          cp bin/TESTCE.8xp artifacts/
+          make clean
+      - name: Build game and retain size evidence
+        run: |
+          make V=1
+          cp bin/LAYERCE.8xp artifacts/
+          find bin -name '*.map' -exec cp {} artifacts/ \;
+          wc -c artifacts/*.8xp | tee artifacts/file-sizes.txt
+          sha256sum artifacts/*.8xp > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LAYERCE-calculator-build
+          path: artifacts/

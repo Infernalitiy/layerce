@@ -1,0 +1,12 @@
+{
+  "folders": [{"path": "."}],
+  "settings": {
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.tabSize": 4,
+    "git.autofetch": true,
+    "C_Cpp.default.includePath": ["${workspaceFolder}/src", "${workspaceFolder}/.tools/CEdev/include"],
+    "files.watcherExclude": {"**/.tools/**": true, "**/obj/**": true},
+    "search.exclude": {"**/.tools/**": true, "**/obj/**": true, "**/bin/**": true}
+  }
+}
