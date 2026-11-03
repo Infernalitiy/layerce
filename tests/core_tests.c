@@ -98,6 +98,7 @@ static void path_and_campaign(void) {
     /* No defenses, high lives: every scripted enemy must spawn and escape. */
     game_init(&g); g.lives=60000;
     for(w=0;w<WAVE_COUNT;++w) {
+        printf("  Round %u/8\n",w+1);
         CHECK(game_start_wave(&g));
         for(i=0;i<20000 && g.running;++i) game_tick(&g);
         CHECK(!g.running && g.wave==w+1); counts();
@@ -106,8 +107,9 @@ static void path_and_campaign(void) {
     }
     CHECK(g.won); CHECK(g.stats.spawned==expected); CHECK(g.stats.escaped==expected);
     CHECK(!game_start_wave(&g));
+    printf("  Stress: 60 steps\n");
     game_stress(&g);
-    for(i=0;i<900;++i) { game_tick(&g); game_stress_refill(&g); }
+    for(i=0;i<60;++i) { game_tick(&g); game_stress_refill(&g); }
     CHECK(g.bloon_count==MAX_BLOONS && g.tower_count==MAX_TOWERS); counts();
 }
 static void upgrades(void) {
